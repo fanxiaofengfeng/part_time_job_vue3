@@ -1,20 +1,21 @@
 <template>
     <div class="pagination">
-      <button @click="goToPage(current - 1)" :disabled="current === 1">Previous</button>
-      <span>Page {{ current }} of {{ total / pageSize }}</span>
-      <button @click="goToPage(current + 1)" :disabled="current === total / pageSize">Next</button>
+      <button @click="goToPage(current - 1)" :disabled="current === 1">上一页</button>
+      <span>第 {{ current }} 页/共 {{ pageCount }} 页</span>
+      <button @click="goToPage(current + 1)" :disabled="current === pageCount">下一页</button>
     </div>
   </template>
   
   <script setup lang="ts">
   import { defineProps, defineEmits } from 'vue';
   
-  const { total, current, pageSize } = defineProps(['total', 'current', 'pageSize']);
-  const { emit } = defineEmits();
+  const { total, current, pageSize, pageCount } = defineProps(['total', 'current', 'pageSize', 'pageCount']);
+  console.log(total,current,pageSize,pageCount)
+  const emit = defineEmits();
   
-  const goToPage = (page: number) => {
-    if (page > 0 && page <= total / pageSize) {
-      emit('pageChange', page);
+  const goToPage = (pageIndex: number) => {
+    if (pageIndex > 0 && pageIndex <= pageCount) {
+      emit('pageChange', pageIndex);
     }
   };
   </script>
