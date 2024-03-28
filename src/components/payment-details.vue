@@ -23,6 +23,7 @@
         <thead>
             <tr>
                 <th>openid</th>
+                <th>昵称</th>
                 <th>付款二维码</th>
                 <th>可提现</th>
                 <th>已经提现</th>
@@ -33,12 +34,14 @@
         <tbody>
             <tr v-for="record in submissionList.records" :key="record.submissionId">
                 <td>{{ record.openid }}</td>
+                <td>{{ record.nickname }}</td>
+
                 <td>
-            <!-- 渲染图片，设置最大宽度和最大高度，并保持宽高比例不变 -->
-            <img :src="record.paymentImageUrl" alt="Payment Image" 
-                 :style="{ maxWidth: isImageZoomed ? '500px' : '100px', maxHeight: isImageZoomed ? '500px' : '100px', height: 'auto' }">
-            <button @click="toggleImageZoom">{{ isImageZoomed ? '缩小' : '放大' }}</button>
-        </td>
+                    <!-- 渲染图片，设置最大宽度和最大高度，并保持宽高比例不变 -->
+                    <img :src="record.paymentImageUrl" alt="Payment Image"
+                        :style="{ maxWidth: isImageZoomed ? '500px' : '100px', maxHeight: isImageZoomed ? '500px' : '100px', height: 'auto' }">
+                    <button @click="toggleImageZoom">{{ isImageZoomed ? '缩小' : '放大' }}</button>
+                </td>
                 <td>{{ record.expectedTransfers }}元</td>
                 <td>{{ record.completedTransfers }}元</td>
                 <td>
@@ -86,7 +89,7 @@ const loadUserSubmissions = async () => {
 
         console.log('妞', token)
 
-        const response = await axios.post('http://111.231.0.98:8888/api/submissions/getSubmissionMoneyPage', {
+        const response = await axios.post('https://jobback.anli.live/api/submissions/getSubmissionMoneyPage', {
 
             pageIndex: pageIndex.value,
             pageSize: pageSize.value
@@ -119,9 +122,7 @@ const resetQuery = () => {
     query.value = {
         openid: "",
         // 重置其他查询条件字段
-
         workCode: ""
-
         // 添加其他输入项，根据实际情况添加
     };
 
@@ -133,7 +134,7 @@ const transferMoney = async (openid: string) => {
 
         console.log('token', token)
 
-        const response = await axios.post('http://111.231.0.98:8888/api/submissions/transferMoney', {
+        const response = await axios.post('https://jobback.anli.live/api/submissions/transferMoney', {
             openid: openid // 将 openid 作为请求参数发送到后端
 
 
@@ -157,7 +158,7 @@ const transferMoney = async (openid: string) => {
 const isImageZoomed = ref(false); // 图片放大状态
 
 const toggleImageZoom = () => {
-  isImageZoomed.value = !isImageZoomed.value;
+    isImageZoomed.value = !isImageZoomed.value;
 };
 </script>
 <style scoped>

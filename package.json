@@ -14,7 +14,8 @@
     "@element-plus/icons-vue": "^2.3.1",
     "@jridgewell/sourcemap-codec": "^1.4.15",
     "axios": "^1.6.7",
-    "element-plus": "latest",
+    "element-plus": "^2.6.1",
+    "element-ui": "^2.15.14",
     "vite-plugin-vue-setup-extend": "^0.4.0",
     "vue": "^3.4.21",
     "vue-router": "^4.3.0"

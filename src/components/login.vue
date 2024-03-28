@@ -21,37 +21,56 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';  // 导入 useRouter
 // 引入整个模块
 import axios from 'axios';
+import 'element-ui/lib/theme-chalk/index.css'; 
+import { ElMessage } from 'element-plus';
+
 const router = useRouter();
 const username = ref('');
 const password = ref('');
 
 const login = async () => {
     try {
-        const response = await axios.post('http://172.18.104.73:8888/login', { username: username.value, password: password.value },
-            { timeout: 5000 })
-            .then(response => {
-                const data = response.data;
-                localStorage.setItem('token', data.data);
+        const response = await axios.post('https://jobback.anli.live/api/login',
+            {
+                username: username.value,
+                password: password.value
+            },
+            { timeout: 5000 });
 
+        // 根据返回的状态码判断登录是否成功
+        if (response.status === 200) {
+            const data = response.data;
+            if (data.code === 1) {
+                localStorage.setItem('token', data.data);
 
                 console.log(data.data)
                 router.replace('/index');
+            } else if (data.code === 401) {
+                showErrorMessage('密码错误');
+            } else {
+                showErrorMessage('登录失败: ' + data.message);
+            }
+        } else {
+            showErrorMessage('请求失败: ' + response.statusText);
 
-            });
-
-        // 登录成功后保存 token
-
-        // 在这里可以进行页面跳转等其他操作
+        }
     } catch (error) {
         if (error instanceof Error && error.message.includes('timeout')) {
-            console.error('Request timeout:', error.message);
+            console.error('请求超时:', error.message);
             // 处理超时逻辑，显示错误提示等
         } else {
-            console.error('Error logging in:', error);
+            console.error('登录错误提示:', error);
             // 处理其他错误逻辑，显示错误提示等
         }
     }
 };
+
+const showErrorMessage = (message: string) => {
+    console.error(message); // 输出错误信息到控制台
+    // 在页面中显示错误信息，使用 Element Plus 的 Message 组件
+    ElMessage.error(message);
+};
+
 </script>
 
 

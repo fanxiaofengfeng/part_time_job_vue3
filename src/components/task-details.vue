@@ -14,6 +14,7 @@
         <label for="workCodeInput">作品编号:</label>
         <input id="workCodeInput" v-model="query.workCode" />
       </div>
+
       <div class="form-group">
         <label for="approvalStatusInput">审核状态:</label>
         <select id="approvalStatusInput" v-model="query.approvalStatus">
@@ -33,6 +34,16 @@
         <label for="submissionTimeEndInput">提交时间结束:</label>
         <input type="date" id="submissionTimeEndInput" v-model="query.submissionTimeEnd" />
       </div>
+      <div class="form-group">
+        <label for="approvalPlatform">平台:</label>
+        <select id="approvalPlatform" v-model="query.platform">
+          <option value="1">小红书</option>
+          <option value="2">快手</option>
+          <option value="3">抖音</option>
+
+        </select>
+      </div>
+
     </div>
 
     <div class="form-row">
@@ -44,6 +55,10 @@
       <div class="form-group">
         <label for="approvalTimeEndInput">审核时间结束:</label>
         <input type="date" id="approvalTimeEndInput" v-model="query.approvalTimeEnd" />
+      </div>
+      <div class="form-group">
+        <label for="nickname">昵称:</label>
+        <input id="nickname" v-model="query.nickname" />
       </div>
     </div>
 
@@ -61,6 +76,8 @@
         <tr>
           <th>提交记录ID</th>
           <th>openid</th>
+          <th>头像</th>
+          <th>昵称</th>
           <th>作品链接</th>
           <th>平台信息</th>
           <th>提交时间</th>
@@ -74,7 +91,18 @@
         <tr v-for="record in submissionList.records" :key="record.submissionId">
           <td>{{ record.submissionId }}</td>
           <td>{{ record.openid }}</td>
-          <td>{{ record.workLink }}</td>
+          <td>
+            <!-- 渲染图片，设置最大宽度和最大高度，并保持宽高比例不变 -->
+            <img :src="record.avatarUrl" alt="Payment Image"
+              :style="{ maxWidth: '100px', maxHeight: '100px', height: 'auto' }">
+            <!-- <button @click="toggleImageZoom">{{ isImageZoomed ? '缩小' : '放大' }}</button> -->
+          </td>
+          <td>{{ record.nickname }}</td>
+          <td>
+            <a :href="getRedirectUrl(record.workLink)" target="_blank">{{ record.workLink }}</a>
+            <button @click="copyLink(record.workLink)" style="float: right;">复制链接</button>
+            <span v-if="copied" class="float-tip">链接已复制到剪贴板</span>
+          </td>
           <td>{{ mapPlatform(record.platform) }}</td>
           <td>{{ record.submissionTime }}</td>
           <td>{{ mapApprovalStatus(record.approvalStatus) }}</td>
@@ -90,13 +118,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, defineProps } from 'vue';
 import axios from 'axios';
 import Pagination from './Pagination.vue';
 import Navbar from './Navbar.vue';
 
 const submissionList = ref<{
-  records: any[]; 
+  records: any[];
   total: number;
   current: number;
   size: number;
@@ -111,7 +139,9 @@ const query = ref({
   approvalTimeStart: "",
   approvalTimeEnd: "",
   approvalStatus: "0", // 默认为未审核
-  approvalBy: ""
+  approvalBy: "",
+  platform: null,
+  nickname: ""
   // 添加其他输入项，根据实际情况添加
 });
 
@@ -119,6 +149,7 @@ const pageIndex = ref(1);
 const pageSize = ref(10);
 
 const loadUserSubmissions = async () => {
+
   try {
 
     // 创建一个新对象，只包含非空参数
@@ -127,16 +158,16 @@ const loadUserSubmissions = async () => {
     );
     const token = localStorage.getItem('token');
 
-    console.log('妞儿',token)
+    console.log('妞儿', token)
 
-    const response = await axios.post('http://localhost:8888/api/submissions/getSubmissionPage', {
+    const response = await axios.post('https://jobback.anli.live/api/submissions/getSubmissionPage', {
       ...requestPayload,
       pageIndex: pageIndex.value,
       pageSize: pageSize.value
-    },{
-        headers: {
-          Authorization: `Bearer ${token}` // 添加 Authorization 头部
-        }
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}` // 添加 Authorization 头部
+      }
     }
     );
 
@@ -146,6 +177,11 @@ const loadUserSubmissions = async () => {
     throw error;
   }
 };
+
+
+
+
+
 
 const handlePageChange = (page: number) => {
   pageIndex.value = page;
@@ -186,10 +222,67 @@ const resetQuery = () => {
     approvalTimeStart: "",
     approvalTimeEnd: "",
     approvalStatus: "0", // 默认为未审核
-    approvalBy: ""
+    approvalBy: "",
+    platform: null,
+    nickname: ""
     // 添加其他输入项，根据实际情况添加
   };
 };
+// 定义提取链接文本的方法
+const extractLinkText = (link: string) => {
+  if (link.includes("http://xhslink.com")) {
+    return "小红书";
+  } else if (link.includes("v.douyin.com")) {
+    return "抖音";
+  } else if (link.includes("v.kuaishou.com")) {
+    return "快手";
+  } else {
+    return link;
+  }
+};
+
+// 定义获取跳转链接的方法
+const getRedirectUrl = (link: string) => {
+  if (link.includes("http://xhslink.com")) {
+    const xhsLink = link.match(/http:\/\/xhslink\.com\/\w+/);
+    if (xhsLink) {
+      return xhsLink[0];
+    }
+  } else if (link.includes("v.douyin.com")) {
+    const douyinLink = link.match(/v.douyin.com\/\w+/);
+    if (douyinLink) {
+      return "https://" + douyinLink[0];
+    }
+  } else if (link.includes("v.kuaishou.com")) {
+    const kuaishouLink = link.match(/v.kuaishou.com\/\w+/);
+    if (kuaishouLink) {
+      return "https://" + kuaishouLink[0];
+    }
+  }
+  return link;
+};
+const props = defineProps({
+  record: Object
+});
+const copied = ref(false);
+const copyLink = (link: string) => {
+  const el = document.createElement('textarea');
+  el.value = link;
+  document.body.appendChild(el);
+  el.select();
+  document.execCommand('copy');
+  document.body.removeChild(el);
+
+  copied.value = true;
+  setTimeout(() => {
+    copied.value = false;
+  }, 1000);
+};
+
+
+
+
+
 </script>
 
 
@@ -270,5 +363,17 @@ tr:hover {
 
 .submissionList {
   width: 100%;
+}
+
+.float-tip {
+  position: absolute;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
 }
 </style>
