@@ -18,6 +18,7 @@
       <div class="form-group">
         <label for="approvalStatusInput">审核状态:</label>
         <select id="approvalStatusInput" v-model="query.approvalStatus">
+          <option value="">请选择审核状态</option>
           <option value="0">未审核</option>
           <option value="1">审核通过</option>
           <option value="2">审核未通过</option>
@@ -82,6 +83,7 @@
           <th>平台信息</th>
           <th>提交时间</th>
           <th>审核状态</th>
+          <th>审批</th>
           <th>审核人openid</th>
           <th>作品编号</th>
           <!-- 添加其他需要显示的列的表头 -->
@@ -106,6 +108,13 @@
           <td>{{ mapPlatform(record.platform) }}</td>
           <td>{{ record.submissionTime }}</td>
           <td>{{ mapApprovalStatus(record.approvalStatus) }}</td>
+          <td>
+            <button
+              @click="updateApprovalStatus(record.submissionId, getNextApprovalStatus(record.approvalStatus), record.openid)">
+              {{ getApprovalButtonText(record.approvalStatus) }}
+            </button>
+          </td>
+
           <td>{{ record.approvalBy }}</td>
           <td>{{ record.workCode }}</td>
           <!-- 添加其他需要显示的列 -->
@@ -138,7 +147,7 @@ const query = ref({
   submissionTimeEnd: "",
   approvalTimeStart: "",
   approvalTimeEnd: "",
-  approvalStatus: "0", // 默认为未审核
+  approvalStatus: "", // 默认为未审核
   approvalBy: "",
   platform: null,
   nickname: ""
@@ -197,6 +206,28 @@ const mapPlatform = (platform: number) => {
   };
   return platformMap[platform] || '未知平台';
 };
+
+const getNextApprovalStatus = (approvalStatus: number) => {
+  if (approvalStatus === 0) {
+    // 未审核状态，返回 1（通过）
+    return 1;
+  } else if (approvalStatus === 1) {
+    // 审批通过状态，返回 2（不通过）
+    return 2;
+  } else {
+    // 审批不通过状态，返回 1（通过）
+    return 1;
+  }
+}
+const getApprovalButtonText = (approvalStatus: number) => {
+  if (approvalStatus === 0) {
+    return '通过';
+  } else if (approvalStatus === 1) {
+    return '不合格';
+  } else {
+    return '通过';
+  }
+}
 
 const mapApprovalStatus = (approvalStatus: number) => {
   const statusMap: Record<number, string> = {
@@ -278,6 +309,28 @@ const copyLink = (link: string) => {
     copied.value = false;
   }, 1000);
 };
+const updateApprovalStatus = async (submissionId: number, approvalStatus: number, openid: string) => {
+  try {
+    const token = localStorage.getItem('token');
+
+    const response = await axios.post('https://jobback.anli.live/api/submissions/updateApprovalStatus', {
+      submissionId: submissionId,
+      approvalStatus: approvalStatus,
+      approvalBy: "admin",
+      openid: openid
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}` // 添加 Authorization 头部
+      }
+    });
+     // 处理响应数据
+     
+     loadUserSubmissions();
+  } catch (error) {
+    console.error('Error occurred while updating approval status:', error);
+  }
+}
+
 
 
 
